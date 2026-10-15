@@ -1,0 +1,5 @@
+Date,Hour,Channel,ActualVolume,ForecastVolume,ActualAHT_Sec,ScheduledFTE,AvailableFTE,ShrinkageRate,TargetSLA_Pct
+2026-10-14,9,Voice,380,350,330,48,42,0.30,0.80
+2026-10-14,10,Voice,440,400,345,52,45,0.30,0.80
+2026-10-14,14,Chat,260,250,420,38,35,0.28,0.85
+2026-10-14,16,Email,210,200,600,36,35,0.25,0.95

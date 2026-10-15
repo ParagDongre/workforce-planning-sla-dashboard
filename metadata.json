@@ -1,0 +1,6 @@
+{
+  "name": "Workforce Planning & SLA Intelligence Dashboard",
+  "description": "Enterprise-grade Workforce Management (WFM) capacity planning, SLA intelligence, and program governance portfolio application.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
