@@ -408,20 +408,62 @@ with tabs[3]:
     st.caption("Demonstrating how undercapacity causes exponential queuing delays and service collapse.")
 
     # Sample scatter points
-    scatter_df = df_filtered.sample(n=min(500, len(df_filtered)), random_state=42)
-    fig_scatter = px.scatter(
-        scatter_df,
-        x='staffing_gap',
-        y='sla_attainment',
-        color='channel',
-        hover_data=['hour', 'actual_volume', 'asa_seconds'],
-        labels={'staffing_gap': 'Staffing Gap (FTE)', 'sla_attainment': 'SLA Attainment (Fraction)'},
-        trendline='lowess'
-    )
-    fig_scatter.add_hline(y=0.80, line_dash="dash", line_color="#ef4444", annotation_text="80% SLA Threshold")
-    fig_scatter.add_vline(x=0, line_dash="dot", line_color="#64748b")
-    fig_scatter.update_layout(height=400)
-    st.plotly_chart(fig_scatter, use_container_width=True)
+    if not df_filtered.empty and len(df_filtered) > 0:
+        sample_size = min(500, len(df_filtered))
+        scatter_df = df_filtered.sample(n=sample_size, random_state=42)
+
+        # Check if statsmodels is installed before using trendline='lowess'
+        has_statsmodels = False
+        try:
+            import statsmodels.api as sm  # noqa: F401
+            has_statsmodels = True
+        except ImportError:
+            has_statsmodels = False
+
+        if has_statsmodels:
+            fig_scatter = px.scatter(
+                scatter_df,
+                x='staffing_gap',
+                y='sla_attainment',
+                color='channel',
+                hover_data=['hour', 'actual_volume', 'asa_seconds'],
+                labels={'staffing_gap': 'Staffing Gap (FTE)', 'sla_attainment': 'SLA Attainment (Fraction)'},
+                trendline='lowess'
+            )
+        else:
+            fig_scatter = px.scatter(
+                scatter_df,
+                x='staffing_gap',
+                y='sla_attainment',
+                color='channel',
+                hover_data=['hour', 'actual_volume', 'asa_seconds'],
+                labels={'staffing_gap': 'Staffing Gap (FTE)', 'sla_attainment': 'SLA Attainment (Fraction)'}
+            )
+            # Add empirical trendline with pure numpy without requiring statsmodels
+            if len(scatter_df) > 5:
+                try:
+                    clean_df = scatter_df.dropna(subset=['staffing_gap', 'sla_attainment']).sort_values('staffing_gap')
+                    if len(clean_df) > 5:
+                        poly_coeffs = np.polyfit(clean_df['staffing_gap'], clean_df['sla_attainment'], 2)
+                        p = np.poly1d(poly_coeffs)
+                        x_vals = np.linspace(clean_df['staffing_gap'].min(), clean_df['staffing_gap'].max(), 50)
+                        y_vals = np.clip(p(x_vals), 0.0, 1.0)
+                        fig_scatter.add_trace(go.Scatter(
+                            x=x_vals,
+                            y=y_vals,
+                            mode='lines',
+                            name='Queuing Trend Fit (Polynomial)',
+                            line=dict(color='#2563eb', width=2.5)
+                        ))
+                except Exception:
+                    pass
+
+        fig_scatter.add_hline(y=0.80, line_dash="dash", line_color="#ef4444", annotation_text="80% SLA Threshold")
+        fig_scatter.add_vline(x=0, line_dash="dot", line_color="#64748b")
+        fig_scatter.update_layout(height=400)
+        st.plotly_chart(fig_scatter, use_container_width=True)
+    else:
+        st.info("No records to display SLA scatter plot. Ingest data or load benchmark in the sidebar.")
 
 
 # ==============================================================================
